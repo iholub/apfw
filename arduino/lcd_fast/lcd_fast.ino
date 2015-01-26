@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include "PCD8544_SPI.h"
 
-//#define USE_FRAME_BUFFER
+#define USE_FRAME_BUFFER
 
 #ifdef USE_FRAME_BUFFER
 PCD8544_SPI_FB lcd;
@@ -29,6 +29,17 @@ uint8_t bmp[] = {
 void loop(void) 
 {
 	size_t len;
+
+	lcd.clear();
+	lcd.print(F("t1:    "));
+	lcd.print(millis());
+        lcd.gotoXY(0,1);
+	lcd.print(F("t2:    "));
+	lcd.print(millis());
+	lcd.renderAll();
+	delay(3000);
+
+        return;
 
 	lcd.clear();
 	unsigned long time = micros();
