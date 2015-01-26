@@ -145,12 +145,12 @@ void loop(void)
     printData(sensor[i], i);
   }
 
-  display.setCursor(0, 2 * 16);
-  display.print(ccc);
-  ccc++;
-  if (ccc > 99999) {
-    ccc = 0;
-  }
+  //display.setCursor(0, 2 * 16);
+  //display.print(ccc);
+  //ccc++;
+  //if (ccc > 99999) {
+  //  ccc = 0;
+  //}
 
   display.display();
   
