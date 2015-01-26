@@ -16,7 +16,7 @@
 // pin 5 - Data/Command select (D/C)
 // pin 4 - LCD chip select (CS)
 // pin 3 - LCD reset (RST)
- Adafruit_PCD8544 display = Adafruit_PCD8544(5, 4, 3);
+Adafruit_PCD8544 display = Adafruit_PCD8544(9, 10, 8);
 // Note with hardware SPI MISO and SS pins aren't used but will still be read
 // and written to during SPI transfer.  Be careful sharing these pins!
 
@@ -26,10 +26,6 @@ void setup()   {
   display.begin();
   display.setContrast(50);
   display.clearDisplay();   // clears the screen and buffer
-  display.setTextSize(1);
-  display.setTextColor(BLACK);
-
-
 }
 
 
@@ -37,9 +33,12 @@ void loop() {
   // text display tests
   display.clearDisplay();
   display.setCursor(0,0);
-  display.print("Hello, world!: ");
+  display.setTextSize(1.5);
+  display.setTextColor(BLACK);
+  display.print("t1: ");
   display.println(millis());
-  
+  display.print("t2: ");
+  display.println(millis());
   display.display();
   delay(2000);
   
