@@ -12,6 +12,6 @@ delay(1);
 }
 Serial.print(average);
 Serial.println(" mA");
-delay(300);
+delay(100);
 }
 
