@@ -60,11 +60,25 @@ double humidity;
 double temperature;
 // humidity sensor end
 
+// soil moisture sensor start
+#define voltageFlipPin1 6
+#define voltageFlipPin2 7
+#define sensorPin A1
+#define soilFlipTimer 300;
+unsigned long soilTimer;
+#define SOIL_STEP_1 1
+#define SOIL_STEP_2 2
+#define SOIL_STEP_3 3
+int soilStep = SOIL_STEP_1;
+float soilVal1 = 0.0;
+float soilVal2 = 0.0;
+// soil moisture sensor end
+
 void setup(void)
 {
   Serial.begin(9600);
   
-  readBattVoltTimer = millis(); // Start now.
+  readBattVoltTimer = soilTimer = millis(); // Start now.
   
   lcd.begin(false, 0xBF, 0x04, 0x12);
 
@@ -87,6 +101,11 @@ void setup(void)
     sensors.setResolution(sensor[i], TEMPERATURE_PRECISION);
   }
 
+// soil moisture sensor start
+  pinMode(voltageFlipPin1, OUTPUT);
+  pinMode(voltageFlipPin2, OUTPUT);
+  pinMode(sensorPin, INPUT);
+// soil moisture sensor end
 }
 
 // function to print a device address
@@ -116,9 +135,9 @@ void printTemperature(DeviceAddress deviceAddress, int ind)
   //lcd.print(addressString[ind].substring(8));
   lcd.print("Temp 1: ");
   lcd.print(strBuf);
-  Serial.print(addressString[ind]);
-  Serial.print(" ");
-  Serial.println(strBuf);
+  //Serial.print(addressString[ind]);
+  //Serial.print(" ");
+  //Serial.println(strBuf);
   
 }
 
@@ -143,7 +162,9 @@ void loop(void)
     readBatteryVoltage();
   }
 
-  //readHumidity();
+  readHumidity();
+
+  readSoil();
 
   for (int i = 0; i < counter; i++) {
     printData(sensor[i], i);
@@ -151,7 +172,9 @@ void loop(void)
 
   printVoltage();
 
-  //printHumidity();
+  printHumidity();
+  
+  printSoil();
   
   lcd.renderAll();
 
@@ -168,13 +191,12 @@ void printVoltage() {
   //Serial.println(outstr);    
 
   char charVal[6];               //temporarily holds data from vals 
+  char strBuf[7];
 
   dtostrf(batteryVoltage, 5, 1, charVal); 
-  char strBuf[7];
   sprintf(strBuf, "%6s", charVal);
 
   lcd.gotoXY(0, 2);
-  //lcd.print(addressString[ind].substring(8));
   lcd.print("Voltage:");
   lcd.print(strBuf);
 }
@@ -183,7 +205,7 @@ void printVoltage() {
 // humidity start
 void readHumidity() {
     // READ DATA
-    Serial.print("DHT22, \t");
+    //Serial.print("DHT22, \t");
 
     unsigned long start = millis();
     int chk = DHT.read22(DHT22_PIN);
@@ -194,40 +216,40 @@ void readHumidity() {
     {
     case DHTLIB_OK:
         stat.ok++;
-        Serial.print("OK,\t");
+        //Serial.print("OK,\t");
         break;
     case DHTLIB_ERROR_CHECKSUM:
         stat.crc_error++;
-        Serial.print("Checksum error,\t");
+        //Serial.print("Checksum error,\t");
         break;
     case DHTLIB_ERROR_TIMEOUT:
         stat.time_out++;
-        Serial.print("Time out error,\t");
+        //Serial.print("Time out error,\t");
         break;
     case DHTLIB_ERROR_CONNECT:
         stat.connect++;
-        Serial.print("Connect error,\t");
+        //Serial.print("Connect error,\t");
         break;
     case DHTLIB_ERROR_ACK_L:
         stat.ack_l++;
-        Serial.print("Ack Low error,\t");
+        //Serial.print("Ack Low error,\t");
         break;
     case DHTLIB_ERROR_ACK_H:
         stat.ack_h++;
-        Serial.print("Ack High error,\t");
+        //Serial.print("Ack High error,\t");
         break;
     default:
         stat.unknown++;
-        Serial.print("Unknown error,\t");
+        //Serial.print("Unknown error,\t");
         break;
     }
     // DISPLAY DATA
-    Serial.print(DHT.humidity, 1);
-    Serial.print(",\t");
-    Serial.print(DHT.temperature, 1);
-    Serial.print(",\t");
-    Serial.print(stop - start);
-    Serial.println();
+    //Serial.print(DHT.humidity, 1);
+    //Serial.print(",\t");
+    //Serial.print(DHT.temperature, 1);
+    //Serial.print(",\t");
+    //Serial.print(stop - start);
+    //Serial.println();
 
   humidity = DHT.humidity;
   temperature = DHT.temperature;
@@ -253,3 +275,53 @@ void printHumidity() {
   
 }
 // humidity end
+
+// soil moisture sensor start
+void readSoil() {
+  if (millis() >= soilTimer) {
+    soilTimer += soilFlipTimer;
+    switch (soilStep) {
+      case SOIL_STEP_1:
+        soilStep = SOIL_STEP_2;
+        digitalWrite(voltageFlipPin1, HIGH);
+        digitalWrite(voltageFlipPin2, LOW);
+        break;
+      case SOIL_STEP_2:
+        soilStep = SOIL_STEP_3;
+        soilVal1 = analogRead(sensorPin);
+        digitalWrite(voltageFlipPin1, LOW);
+        digitalWrite(voltageFlipPin2, HIGH);
+        break;
+      case SOIL_STEP_3:
+        soilStep = SOIL_STEP_1;
+        soilVal2 = 1023 - analogRead(sensorPin);
+        digitalWrite(voltageFlipPin1, LOW);
+        digitalWrite(voltageFlipPin2, LOW);
+        break;
+    }
+  }
+}
+
+void printSoil() {
+  int avg = (soilVal1 + soilVal2) / 2;
+  Serial.print("1: ");
+  Serial.print(soilVal1);
+  Serial.print(" 2: ");
+  Serial.print(soilVal2);
+  String msg = " avg: ";
+  msg += avg;
+  Serial.println(msg);
+  
+  //char charVal[6];               //temporarily holds data from vals 
+  char strBuf[7];
+
+  //dtostrf(batteryVoltage, 5, 1, charVal); 
+  //sprintf(strBuf, "%6s", charVal);
+  sprintf(strBuf, "%6d", avg);
+
+  lcd.gotoXY(0, 5);
+  lcd.print("Soil: ");
+  lcd.print(strBuf);
+  //lcd.print(avg);
+}
+// soil moisture sensor end
