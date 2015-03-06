@@ -81,6 +81,10 @@ void printTemperature(DeviceAddress deviceAddress, int ind)
   lcd.gotoXY(0, ind);
   lcd.print(addressString[ind].substring(8));
   lcd.print(strBuf);
+  Serial.print(addressString[ind]);
+  Serial.print(" ");
+  Serial.println(strBuf);
+  
 }
 
 // main function to print information about a device
