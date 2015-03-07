@@ -35,9 +35,9 @@ int counter = 0;
 #define BATT_VOLT_READ_SPEED 1000
 unsigned long readBattVoltTimer;
 float batteryVoltage = 0.0;
-#define BATT_VOLT_R1 47000 
-#define BATT_VOLT_R2 51000
-const float BATT_VOLT_VD = (BATT_VOLT_R1 + BATT_VOLT_R2)/BATT_VOLT_R2;
+const float BATT_VOLT_R1 = 47000; 
+const float BATT_VOLT_R2 = 51000;
+const float BATT_VOLT_VD = 3.3 * (BATT_VOLT_R1 + BATT_VOLT_R2)/BATT_VOLT_R2 / 1024.0;
 // voltage end
 
 static char outstr[15];
@@ -157,10 +157,7 @@ void loop(void)
 
   //lcd.clear();
 
-  if (millis() >= readBattVoltTimer) {
-    readBattVoltTimer += BATT_VOLT_READ_SPEED;
-    readBatteryVoltage();
-  }
+  readBatteryVoltage();
 
   readHumidity();
 
@@ -182,18 +179,26 @@ void loop(void)
 
 // voltage functions start
 void readBatteryVoltage() {
-  batteryVoltage = (analogRead(BATT_VOLT_PIN) * 5.0 * BATT_VOLT_VD) / 1024.0;
+  if (millis() >= readBattVoltTimer) {
+    readBattVoltTimer += BATT_VOLT_READ_SPEED;
+    int v = analogRead(BATT_VOLT_PIN);
+    //Serial.print("ao: ");
+    //Serial.print(v);
+    //Serial.print(" BATT_VOLT_VD: ");
+    //Serial.print(BATT_VOLT_VD);
+    batteryVoltage = v * BATT_VOLT_VD;
+  }
 }
 
 void printVoltage() {
-  //dtostrf(batteryVoltage,7, 3, outstr);
+  dtostrf(batteryVoltage,7, 3, outstr);
   //Serial.print("V: ");
   //Serial.println(outstr);    
 
   char charVal[6];               //temporarily holds data from vals 
   char strBuf[7];
 
-  dtostrf(batteryVoltage, 5, 1, charVal); 
+  dtostrf(batteryVoltage, 5, 2, charVal); 
   sprintf(strBuf, "%6s", charVal);
 
   lcd.gotoXY(0, 2);
@@ -304,13 +309,13 @@ void readSoil() {
 
 void printSoil() {
   int avg = (soilVal1 + soilVal2) / 2;
-  Serial.print("1: ");
-  Serial.print(soilVal1);
-  Serial.print(" 2: ");
-  Serial.print(soilVal2);
-  String msg = " avg: ";
-  msg += avg;
-  Serial.println(msg);
+  //Serial.print("1: ");
+  //Serial.print(soilVal1);
+  //Serial.print(" 2: ");
+  //Serial.print(soilVal2);
+  //String msg = " avg: ";
+  //msg += avg;
+  //Serial.println(msg);
   
   //char charVal[6];               //temporarily holds data from vals 
   char strBuf[7];
